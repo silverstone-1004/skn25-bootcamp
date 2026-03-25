@@ -132,9 +132,9 @@ def train_policy_gradient():
     return model
 
 # ==========================================
-# 7단계: 결과 시각화 및 평가 (Evaluation)
+# 7단계: 결과 시각화 (Rendering Animation)
 # ==========================================
-def render_and_save_animation(model, filename="cartpole_result.mp4"):
+def render_policy(model):
     env = gym.make('CartPole-v1', render_mode='rgb_array')
     obs, info = env.reset(seed=42)
     frames = []
@@ -143,30 +143,26 @@ def render_and_save_animation(model, filename="cartpole_result.mp4"):
         frames.append(env.render())
         obs_tensor = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(device)
         with torch.no_grad():
-            probs = model(obs_tensor)
-            action = torch.argmax(probs).item() # 가장 높은 확률의 행동 선택
-        
+            action = torch.argmax(model(obs_tensor)).item() # 최적 행동 선택
         obs, reward, done, truncated, info = env.step(action)
-        if done or truncated:
-            break
+        if done or truncated: break
     env.close()
 
-    # 애니메이션 생성 및 저장
-    fig = plt.figure()
-    patch = plt.imshow(frames[0])
+    # 애니메이션 생성
+    fig, ax = plt.subplots()
+    patch = ax.imshow(frames[0])
     plt.axis('off')
-    
+
     def update(i):
         patch.set_data(frames[i])
         return [patch]
 
     anim = animation.FuncAnimation(fig, update, frames=len(frames), interval=40)
-    # 주피터 환경이 아닐 경우 파일로 저장하거나 plt.show() 사용
-    print(f"결과 영상을 저장 중입니다: {filename}")
-    # anim.save(filename, writer='ffmpeg') # ffmpeg 설치 필요
-    plt.show()
+    plt.close() # 중복 차트 출력 방지
+    return anim
 
-# 실행부
+# 실행 및 동영상 출력
 if __name__ == "__main__":
-    trained_model = train_policy_gradient()
-    render_and_save_animation(trained_model)
+    final_model = train_pg()
+    anim = render_policy(final_model)
+    display(HTML(anim.to_jshtml())) # 동영상 렌더링 및 출력
