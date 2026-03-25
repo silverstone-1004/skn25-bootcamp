@@ -1,4 +1,5 @@
 #수정해야함
+#수식 넣는 법 고민하기
 
 pip install gymnasium
 
